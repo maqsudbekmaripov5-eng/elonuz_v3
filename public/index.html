@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E'lonUz</title>
+</head>
+<body>
+  <h1>🇺🇿 E'lonUz v3</h1>
+  <p>Server va database muvaffaqiyatli ishlayapti! 🎉</p>
+
+  <h2>E'lonlar</h2>
+  <div id="ads">Yuklanmoqda...</div>
+
+  <script>
+    fetch('/api/ads')
+      .then(res => res.json())
+      .then(ads => {
+        const container = document.getElementById('ads');
+
+        if (!ads.length) {
+          container.innerHTML = '<p>Hozircha e\'lonlar yo\'q.</p>';
+          return;
+        }
+
+        container.innerHTML = ads.map(ad => `
+          <div style="border:1px solid #ccc;padding:15px;margin:10px 0;border-radius:10px">
+            <h3>${ad.image || '📦'} ${ad.title}</h3>
+            <p><b>Narxi:</b> ${ad.price} so'm</p>
+            <p>${ad.description || ''}</p>
+            <p>📍 ${ad.region || ''}, ${ad.city || ''}</p>
+            <p>👤 ${ad.seller || ''}</p>
+          </div>
+        `).join('');
+      })
+      .catch(error => {
+        document.getElementById('ads').innerHTML =
+          'Xatolik: ' + error.message;
+      });
+  </script>
+</body>
+</html>
