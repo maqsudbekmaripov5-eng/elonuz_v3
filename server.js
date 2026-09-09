@@ -1,395 +1,227 @@
 const express = require("express");
 const cors = require("cors");
-const dotenv = require("dotenv");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-
-dotenv.config();
+const path = require("path");
+const { Pool } = require("pg");
 
 const app = express();
 
-const PORT = process.env.PORT || 3000;
-const JWT_SECRET =
-  process.env.JWT_SECRET || "change-this-secret";
-
 app.use(cors());
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({ limit: "15mb" }));
 
-/* ================================
-   TEMPORARY DATABASE
-   PostgreSQL keyingi qadamda ulanadi
-================================ */
-
-let users = [];
-let ads = [
-  {
-    id: 1,
-    title: "iPhone 13 128GB",
-    price: 5500000,
-    category: "Telefonlar",
-    region: "Toshkent",
-    city: "Toshkent shahri",
-    description: "Yaxshi holatda. Komplekti bor.",
-    image: "📱",
-    seller: "Demo foydalanuvchi",
-    phone: "+998901234567",
-    userId: 1,
-    date: Date.now()
-  }
-];
-
-let messages = [];
-
-
-/* ================================
-   HEALTH CHECK
-================================ */
-
-app.get("/", (req, res) => {
-  res.json({
-    app: "E'lonUz v3",
-    status: "online"
-  });
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 });
 
-
-/* ================================
-   REGISTER
-================================ */
-
-app.post("/api/auth/register", async (req, res) => {
-
-  try {
-
-    const { name, phone, password } = req.body;
-
-    if (!name || !phone || !password) {
-      return res.status(400).json({
-        error: "Barcha maydonlarni to'ldiring"
-      });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({
-        error:
-          "Parol kamida 6 ta belgidan iborat bo'lishi kerak"
-      });
-    }
-
-    const exists =
-      users.find(
-        user => user.phone === phone
-      );
-
-    if (exists) {
-      return res.status(400).json({
-        error:
-          "Bu telefon raqami allaqachon ro'yxatdan o'tgan"
-      });
-    }
-
-    const hashedPassword =
-      await bcrypt.hash(password, 10);
-
-    const user = {
-      id: Date.now(),
-      name,
-      phone,
-      password: hashedPassword,
-      createdAt: Date.now()
-    };
-
-    users.push(user);
-
-    const token = jwt.sign(
-      {
-        id: user.id,
-        phone: user.phone
-      },
-      JWT_SECRET,
-      {
-        expiresIn: "30d"
-      }
+async function initDatabase() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id BIGSERIAL PRIMARY KEY,
+      name TEXT NOT NULL DEFAULT 'Foydalanuvchi',
+      phone TEXT UNIQUE NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
     );
 
-    res.status(201).json({
-      message:
-        "Ro'yxatdan o'tish muvaffaqiyatli",
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        phone: user.phone
-      }
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      error: "Server xatosi"
-    });
-  }
-});
-
-
-/* ================================
-   LOGIN
-================================ */
-
-app.post("/api/auth/login", async (req, res) => {
-
-  try {
-
-    const { phone, password } = req.body;
-
-    const user =
-      users.find(
-        user => user.phone === phone
-      );
-
-    if (!user) {
-      return res.status(401).json({
-        error:
-          "Telefon raqami yoki parol noto'g'ri"
-      });
-    }
-
-    const passwordOk =
-      await bcrypt.compare(
-        password,
-        user.password
-      );
-
-    if (!passwordOk) {
-      return res.status(401).json({
-        error:
-          "Telefon raqami yoki parol noto'g'ri"
-      });
-    }
-
-    const token = jwt.sign(
-      {
-        id: user.id,
-        phone: user.phone
-      },
-      JWT_SECRET,
-      {
-        expiresIn: "30d"
-      }
+    CREATE TABLE IF NOT EXISTS ads (
+      id BIGSERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      price BIGINT NOT NULL DEFAULT 0,
+      category TEXT,
+      region TEXT,
+      city TEXT,
+      description TEXT,
+      seller TEXT,
+      phone TEXT,
+      image TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
     );
 
-    res.json({
-      message: "Kirish muvaffaqiyatli",
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        phone: user.phone
-      }
-    });
+    CREATE TABLE IF NOT EXISTS messages (
+      id BIGSERIAL PRIMARY KEY,
+      ad_id BIGINT REFERENCES ads(id) ON DELETE CASCADE,
+      sender TEXT,
+      text TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
 
-  } catch (error) {
+  const { rows } = await pool.query(
+    "SELECT COUNT(*)::int AS count FROM ads"
+  );
 
-    console.error(error);
-
-    res.status(500).json({
-      error: "Server xatosi"
-    });
-  }
-});
-
-
-/* ================================
-   AUTH MIDDLEWARE
-================================ */
-
-function auth(req, res, next) {
-
-  const header =
-    req.headers.authorization;
-
-  if (!header) {
-    return res.status(401).json({
-      error: "Token topilmadi"
-    });
+  if (rows[0].count === 0) {
+    await pool.query(`
+      INSERT INTO ads
+      (title, price, category, region, city, description, seller, phone, image)
+      VALUES
+      ('iPhone 13 128GB', 5500000, 'Telefonlar', 'Toshkent', 'Toshkent shahri', 'Yaxshi holatda. Komplekti bor.', 'Aziz', '+998901234567', '📱'),
+      ('Samsung kir yuvish mashinasi', 2200000, 'Maishiy texnika', 'Samarqand', 'Samarqand', 'Ishlashi yaxshi va holati toza.', 'Dilshod', '+998912223344', '🧺'),
+      ('Cobalt 2022', 145000000, 'Avtomobillar', 'Buxoro', 'Buxoro', 'Toza, avariyasiz avtomobil.', 'Jasur', '+998935556677', '🚗');
+    `);
   }
 
-  const token =
-    header.replace("Bearer ", "");
-
-  try {
-
-    req.user =
-      jwt.verify(
-        token,
-        JWT_SECRET
-      );
-
-    next();
-
-  } catch (error) {
-
-    res.status(401).json({
-      error:
-        "Token noto'g'ri yoki eskirgan"
-    });
-  }
+  console.log("DATABASE TAYYOR!");
 }
 
-
-/* ================================
-   GET ADS
-================================ */
-
-app.get("/api/ads", (req, res) => {
-
-  res.json(ads);
-
+app.get("/api/health", async (req, res) => {
+  try {
+    await pool.query("SELECT NOW()");
+    res.json({ ok: true, database: "connected" });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      database: "error",
+      error: error.message
+    });
+  }
 });
 
+app.get("/api/ads", async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      "SELECT * FROM ads ORDER BY created_at DESC"
+    );
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
-/* ================================
-   CREATE AD
-================================ */
-
-app.post(
-  "/api/ads",
-  auth,
-  (req, res) => {
-
+app.post("/api/ads", async (req, res) => {
+  try {
     const {
-      title,
-      price,
-      category,
-      region,
-      city,
-      description,
-      image
+      title, price, category, region, city,
+      description, seller, phone, image
     } = req.body;
 
-    if (
-      !title ||
-      !price ||
-      !category
-    ) {
+    const { rows } = await pool.query(
+      `INSERT INTO ads
+      (title, price, category, region, city, description, seller, phone, image)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+      RETURNING *`,
+      [title, price || 0, category, region, city,
+       description, seller, phone, image]
+    );
 
-      return res.status(400).json({
-        error:
-          "Majburiy maydonlarni to'ldiring"
-      });
-    }
-
-    const user =
-      users.find(
-        item =>
-          item.id === req.user.id
-      );
-
-    const ad = {
-
-      id: Date.now(),
-
-      title,
-      price: Number(price),
-
-      category,
-
-      region:
-        region || "",
-
-      city:
-        city || "",
-
-      description:
-        description || "",
-
-      image:
-        image || "📦",
-
-      seller:
-        user ? user.name : "Foydalanuvchi",
-
-      phone:
-        user ? user.phone : "",
-
-      userId:
-        req.user.id,
-
-      date:
-        Date.now()
-
-    };
-
-    ads.unshift(ad);
-
-    res.status(201).json(ad);
-
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-);
+});
 
+app.put("/api/ads/:id", async (req, res) => {
+  try {
+    const {
+      title, price, category, region, city,
+      description, seller, phone, image
+    } = req.body;
 
-/* ================================
-   DELETE AD
-================================ */
+    const { rows } = await pool.query(
+      `UPDATE ads SET
+        title=$1, price=$2, category=$3, region=$4,
+        city=$5, description=$6, seller=$7,
+        phone=$8, image=$9
+       WHERE id=$10
+       RETURNING *`,
+      [title, price, category, region, city,
+       description, seller, phone, image,
+       req.params.id]
+    );
 
-app.delete(
-  "/api/ads/:id",
-  auth,
-  (req, res) => {
+    if (!rows[0])
+      return res.status(404).json({ error: "Topilmadi" });
 
-    const id =
-      Number(req.params.id);
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
-    const index =
-      ads.findIndex(
-        ad => ad.id === id
-      );
+app.delete("/api/ads/:id", async (req, res) => {
+  try {
+    await pool.query(
+      "DELETE FROM ads WHERE id=$1",
+      [req.params.id]
+    );
 
-    if (index === -1) {
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
-      return res.status(404).json({
-        error:
-          "E'lon topilmadi"
-      });
-    }
+app.post("/api/register", async (req, res) => {
+  try {
+    const { phone, name } = req.body;
 
-    if (
-      ads[index].userId !==
-      req.user.id
-    ) {
-
-      return res.status(403).json({
-        error:
-          "Bu e'lon sizga tegishli emas"
-      });
-    }
-
-    ads.splice(index, 1);
+    const { rows } = await pool.query(
+      `INSERT INTO users (phone, name)
+       VALUES ($1,$2)
+       ON CONFLICT (phone)
+       DO UPDATE SET name=EXCLUDED.name
+       RETURNING *`,
+      [phone, name || "Foydalanuvchi"]
+    );
 
     res.json({
-      message:
-        "E'lon o'chirildi"
+      user: rows[0],
+      token: "local-demo-token"
     });
-
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-);
-
-
-/* ================================
-   SERVER
-================================ */
-
-app.listen(PORT, "0.0.0.0", () => {
-
-  console.log("");
-  console.log("==============================");
-  console.log("   E'LONUZ V3 API ISHGA TUSHDI");
-  console.log("==============================");
-  console.log(
-    "http://127.0.0.1:" + PORT
-  );
-  console.log("");
-
 });
+
+app.get("/api/messages/:adId", async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM messages
+       WHERE ad_id=$1
+       ORDER BY created_at ASC`,
+      [req.params.adId]
+    );
+
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/messages", async (req, res) => {
+  try {
+    const { adId, sender, text } = req.body;
+
+    const { rows } = await pool.query(
+      `INSERT INTO messages (ad_id, sender, text)
+       VALUES ($1,$2,$3)
+       RETURNING *`,
+      [adId, sender, text]
+    );
+
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.use(express.static(path.join(__dirname, "public")));
+
+app.get(/.*/, (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+const PORT = process.env.PORT || 3000;
+
+initDatabase()
+  .then(() => {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log("================================");
+      console.log(" E'LONUZ V3 + SUPABASE ISHGA TUSHDI");
+      console.log(" PORT:", PORT);
+      console.log("================================");
+    });
+  })
+  .catch(error => {
+    console.error("DATABASE XATOSI:", error.message);
+    process.exit(1);
+  });
