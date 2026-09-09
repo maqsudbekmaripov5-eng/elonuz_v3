@@ -1,286 +1,41 @@
 <!DOCTYPE html>
-<html lang="uz">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>E'lonUz — E'lonlar platformasi</title>
+<html lang="uz"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>E'lonUz</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#f5f6f8;color:#222}
-header{background:#fff;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:10}
-.nav{max-width:1100px;margin:auto;padding:14px 18px;display:flex;align-items:center;gap:15px;justify-content:space-between}
-.logo{font-size:25px;font-weight:800;color:#166534}
-.logo span{color:#f59e0b}
-.btn{border:0;border-radius:10px;padding:11px 15px;font-weight:bold;cursor:pointer}
-.primary{background:#166534;color:white}
-.container{max-width:1100px;margin:auto;padding:20px 15px}
-.hero{background:linear-gradient(135deg,#166534,#22c55e);color:white;padding:30px;border-radius:18px;margin-bottom:20px}
-.hero h1{margin:0 0 8px;font-size:30px}
-.search{display:grid;grid-template-columns:1fr 180px 120px;gap:10px;margin-top:20px}
-input,select,textarea{width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;font-size:15px;background:white}
-.categories{display:flex;gap:10px;overflow:auto;padding:5px 0 15px}
-.cat{background:#fff;border:1px solid #e5e7eb;padding:10px 15px;border-radius:12px;white-space:nowrap;cursor:pointer}
-.cat.active{background:#166534;color:white}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.card{background:#fff;border-radius:15px;padding:16px;box-shadow:0 2px 10px #0000000b}
-.emoji{font-size:45px}
-.price{font-size:20px;font-weight:bold;color:#166534;margin:8px 0}
-.muted{color:#777;font-size:14px}
-.card h3{margin:8px 0}
-.card button{margin-top:10px;width:100%}
-.empty{text-align:center;padding:50px;color:#777}
-.modal{display:none;position:fixed;inset:0;background:#0008;z-index:50;padding:20px;overflow:auto}
-.modal-content{background:#fff;max-width:600px;margin:30px auto;padding:20px;border-radius:18px}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.form-grid .full{grid-column:1/-1}
-.actions{display:flex;gap:10px;margin-top:15px}
-.actions button{flex:1}
-.secondary{background:#e5e7eb}
-.loading{text-align:center;padding:30px}
-footer{text-align:center;padding:30px;color:#777}
-@media(max-width:700px){
-.search{grid-template-columns:1fr}
-.grid{grid-template-columns:1fr}
-.form-grid{grid-template-columns:1fr}
-.hero h1{font-size:24px}
-}
-</style>
-</head>
-<body>
-
-<header>
-<div class="nav">
-<div class="logo">🇺🇿 E'lon<span>Uz</span></div>
-<button class="btn primary" onclick="openModal()">＋ E'lon berish</button>
-</div>
-</header>
-
-<main class="container">
-<section class="hero">
-<h1>O'zbekistondagi e'lonlar platformasi</h1>
-<div>E'lonlarni toping, soting va xarid qiling.</div>
-
-<div class="search">
-<input id="searchInput" placeholder="Nima qidiryapsiz?" oninput="renderAds()">
-<select id="regionFilter" onchange="renderAds()">
-<option value="">Barcha hududlar</option>
-<option>Toshkent</option>
-<option>Samarqand</option>
-<option>Buxoro</option>
-<option>Farg'ona</option>
-<option>Andijon</option>
-<option>Namangan</option>
-</select>
-<button class="btn primary" onclick="renderAds()">Qidirish</button>
-</div>
-</section>
-
-<div class="categories" id="categories">
-<div class="cat active" data-category="">Hammasi</div>
-<div class="cat" data-category="Telefonlar">📱 Telefonlar</div>
-<div class="cat" data-category="Avtomobillar">🚗 Avtomobillar</div>
-<div class="cat" data-category="Maishiy texnika">🧺 Texnika</div>
-<div class="cat" data-category="Ko'chmas mulk">🏠 Uy-joy</div>
-<div class="cat" data-category="Ish">💼 Ish</div>
-<div class="cat" data-category="Boshqa">📦 Boshqa</div>
-</div>
-
-<h2>E'lonlar</h2>
-<div id="ads" class="grid">
-<div class="loading">E'lonlar yuklanmoqda...</div>
-</div>
-</main>
-
-<div id="modal" class="modal">
-<div class="modal-content">
-<h2>Yangi e'lon berish</h2>
-
-<form id="adForm">
-<div class="form-grid">
-
-<input class="full" id="title" placeholder="E'lon nomi" required>
-
-<input id="price" type="number" placeholder="Narxi (so'm)" required>
-
-<select id="category" required>
-<option value="">Kategoriya</option>
-<option>Telefonlar</option>
-<option>Avtomobillar</option>
-<option>Maishiy texnika</option>
-<option>Ko'chmas mulk</option>
-<option>Ish</option>
-<option>Boshqa</option>
-</select>
-
-<select id="region" required>
-<option value="">Viloyat</option>
-<option>Toshkent</option>
-<option>Samarqand</option>
-<option>Buxoro</option>
-<option>Farg'ona</option>
-<option>Andijon</option>
-<option>Namangan</option>
-</select>
-
-<input id="city" placeholder="Shahar yoki tuman">
-
-<input id="seller" placeholder="Ismingiz" required>
-
-<input id="phone" placeholder="Telefon raqam" required>
-
-<input id="image" placeholder="Emoji (masalan 📱)" value="📦">
-
-<textarea class="full" id="description" rows="4" placeholder="E'lon haqida batafsil ma'lumot"></textarea>
-
-</div>
-
-<div class="actions">
-<button type="button" class="btn secondary" onclick="closeModal()">Bekor qilish</button>
-<button type="submit" class="btn primary">E'lonni joylash</button>
-</div>
-
-</form>
-</div>
-</div>
-
-<footer>
-© 2026 E'lonUz — Barcha huquqlar himoyalangan
-</footer>
-
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f6f8;color:#222}header{background:#fff;border-bottom:1px solid #ddd;position:sticky;top:0;z-index:10}.nav{max-width:1100px;margin:auto;padding:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.logo{font-size:25px;font-weight:bold;color:#166534}button{border:0;border-radius:10px;padding:10px 14px;font-weight:bold;cursor:pointer}.primary{background:#166534;color:white}.secondary{background:#e5e7eb}.danger{background:#dc2626;color:white}.container{max-width:1100px;margin:auto;padding:20px 15px}.hero{background:linear-gradient(135deg,#166534,#22c55e);color:white;padding:28px;border-radius:18px}.search{display:grid;grid-template-columns:1fr 180px 120px;gap:10px;margin-top:15px}input,select,textarea{width:100%;padding:11px;border:1px solid #ddd;border-radius:10px;font-size:15px}.categories{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0}.cat{background:white;border:1px solid #ddd}.cat.active{background:#166534;color:white}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:15px}.card{background:white;border-radius:14px;padding:16px;box-shadow:0 2px 8px #0001}.emoji{font-size:38px}.price{font-size:20px;font-weight:bold;color:#166534;margin:8px 0}.muted{color:#666;font-size:14px;margin:5px 0}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.modal{display:none;position:fixed;z-index:100;background:#0008;inset:0;padding:20px;overflow:auto}.modal-content{background:white;max-width:520px;margin:30px auto;padding:20px;border-radius:16px}.form-group{margin-bottom:12px}.form-group label{display:block;margin-bottom:5px;font-weight:bold}.hidden{display:none!important}.empty{padding:30px;text-align:center;background:white;border-radius:14px}footer{text-align:center;padding:30px;color:#777}@media(max-width:650px){.search{grid-template-columns:1fr}}
+</style></head><body>
+<header><div class="nav">
+<div class="logo">🇺🇿 E'lonUz</div>
+<div id="guestButtons"><button class="secondary" onclick="openAuth()">🔐 Kirish</button><button class="primary" onclick="openAuth('register')">Ro'yxatdan o'tish</button></div>
+<div id="userButtons" class="hidden"><span id="userName"></span><button class="secondary" onclick="showMyAds()">📦 Mening e'lonlarim</button><button class="secondary" onclick="showFavorites()">❤️ Sevimlilar</button><button class="danger" onclick="logout()">Chiqish</button></div>
+<button class="primary" onclick="openAdModal()">＋ E'lon berish</button>
+</div></header>
+<div class="container"><div class="hero"><h1>O'zbekistondagi e'lonlar platformasi</h1><p>E'lonlarni toping, soting va xarid qiling.</p><div class="search"><input id="searchInput" placeholder="Nima qidiryapsiz?" oninput="renderAds()"><select id="regionFilter" onchange="renderAds()"><option value="">Barcha hududlar</option><option>Toshkent</option><option>Andijon</option><option>Samarqand</option><option>Buxoro</option><option>Farg'ona</option><option>Namangan</option></select><button class="primary" onclick="renderAds()">Qidirish</button></div></div>
+<div class="categories"><button class="cat active" data-category="">Hammasi</button><button class="cat" data-category="Telefonlar">📱 Telefonlar</button><button class="cat" data-category="Avtomobillar">🚗 Avtomobillar</button><button class="cat" data-category="Texnika">🧺 Texnika</button><button class="cat" data-category="Uy-joy">🏠 Uy-joy</button><button class="cat" data-category="Ish">💼 Ish</button><button class="cat" data-category="Boshqa">📦 Boshqa</button></div>
+<h2 id="pageTitle">E'lonlar</h2><div id="ads" class="grid"></div></div>
+<div id="authModal" class="modal"><div class="modal-content"><h2 id="authTitle">Kirish</h2><div id="registerName" class="form-group hidden"><label>Ismingiz</label><input id="authName"></div><div class="form-group"><label>Telefon</label><input id="authPhone" placeholder="+998901234567"></div><div class="form-group"><label>Parol</label><input id="authPassword" type="password"></div><div class="actions"><button class="primary" onclick="submitAuth()">Davom etish</button><button class="secondary" onclick="toggleAuth()">Rejimni almashtirish</button><button class="secondary" onclick="closeAuth()">Bekor qilish</button></div><p id="authHint"></p></div></div>
+<div id="adModal" class="modal"><div class="modal-content"><h2 id="adModalTitle">Yangi e'lon</h2><form id="adForm"><div class="form-group"><label>Sarlavha</label><input id="title" required></div><div class="form-group"><label>Narx</label><input id="price" type="number" required></div><div class="form-group"><label>Kategoriya</label><select id="category"><option>Telefonlar</option><option>Avtomobillar</option><option>Texnika</option><option>Uy-joy</option><option>Ish</option><option>Boshqa</option></select></div><div class="form-group"><label>Viloyat</label><input id="region" required></div><div class="form-group"><label>Shahar</label><input id="city"></div><div class="form-group"><label>Tavsif</label><textarea id="description"></textarea></div><div class="form-group"><label>Emoji</label><input id="image" placeholder="📦"></div><div class="actions"><button class="primary" type="submit">Saqlash</button><button class="secondary" type="button" onclick="closeAdModal()">Bekor qilish</button></div></form></div></div>
+<footer>© 2026 E'lonUz — Barcha huquqlar himoyalangan</footer>
 <script>
-let ads = [];
-let activeCategory = "";
-
-async function loadAds(){
-try{
-const res = await fetch("/api/ads");
-if(!res.ok) throw new Error("Server xatosi");
-ads = await res.json();
-renderAds();
-}catch(err){
-document.getElementById("ads").innerHTML =
-'<div class="empty">❌ E\'lonlarni yuklashda xatolik</div>';
-}
-}
-
-function renderAds(){
-const search = document.getElementById("searchInput").value.toLowerCase();
-const region = document.getElementById("regionFilter").value;
-
-const filtered = ads.filter(ad=>{
-const matchesSearch =
-(ad.title||"").toLowerCase().includes(search) ||
-(ad.description||"").toLowerCase().includes(search);
-
-const matchesRegion = !region || ad.region === region;
-const matchesCategory = !activeCategory || ad.category === activeCategory;
-
-return matchesSearch && matchesRegion && matchesCategory;
-});
-
-const container = document.getElementById("ads");
-
-if(!filtered.length){
-container.innerHTML='<div class="empty">📭 E\'lon topilmadi</div>';
-return;
-}
-
-container.innerHTML=filtered.map(ad=>`
-<div class="card">
-<div class="emoji">${escapeHtml(ad.image||"📦")}</div>
-<h3>${escapeHtml(ad.title)}</h3>
-<div class="price">${Number(ad.price).toLocaleString("uz-UZ")} so'm</div>
-<div class="muted">📂 ${escapeHtml(ad.category||"Boshqa")}</div>
-<div class="muted">📍 ${escapeHtml(ad.region||"")}, ${escapeHtml(ad.city||"")}</div>
-<p>${escapeHtml(ad.description||"")}</p>
-<div class="muted">👤 ${escapeHtml(ad.seller||"")}</div>
-<div class="muted">📞 ${escapeHtml(ad.phone||"")}</div>
-<button class="btn secondary" onclick="deleteAd(${ad.id})">🗑️ O'chirish</button>
-</div>
-`).join("");
-}
-
-function escapeHtml(text){
-const div=document.createElement("div");
-div.textContent=text;
-return div.innerHTML;
-}
-
-function openModal(){
-document.getElementById("modal").style.display="block";
-}
-
-function closeModal(){
-document.getElementById("modal").style.display="none";
-}
-
-document.querySelectorAll(".cat").forEach(cat=>{
-cat.addEventListener("click",()=>{
-document.querySelectorAll(".cat").forEach(x=>x.classList.remove("active"));
-cat.classList.add("active");
-activeCategory=cat.dataset.category;
-renderAds();
-});
-});
-
-document.getElementById("adForm").addEventListener("submit",async e=>{
-e.preventDefault();
-
-const button=e.target.querySelector('button[type="submit"]');
-button.disabled=true;
-button.textContent="Yuborilmoqda...";
-
-const data={
-title:document.getElementById("title").value,
-price:Number(document.getElementById("price").value),
-category:document.getElementById("category").value,
-region:document.getElementById("region").value,
-city:document.getElementById("city").value,
-description:document.getElementById("description").value,
-seller:document.getElementById("seller").value,
-phone:document.getElementById("phone").value,
-image:document.getElementById("image").value || "📦"
-};
-
-try{
-const res=await fetch("/api/ads",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify(data)
-});
-
-if(!res.ok) throw new Error();
-
-closeModal();
-e.target.reset();
-await loadAds();
-alert("🎉 E'lon muvaffaqiyatli joylandi!");
-}catch(err){
-alert("❌ Xatolik yuz berdi");
-}
-
-button.disabled=false;
-button.textContent="E'lonni joylash";
-});
-
-async function deleteAd(id){
-if(!confirm("E'lonni o'chirmoqchimisiz?")) return;
-
-try{
-const res=await fetch("/api/ads/"+id,{method:"DELETE"});
-if(!res.ok) throw new Error();
-await loadAds();
-}catch(err){
-alert("❌ O'chirishda xatolik");
-}
-}
-
-window.addEventListener("click",e=>{
-if(e.target.id==="modal") closeModal();
-});
-
-loadAds();
-</script>
-
-</body>
-</html>
+let ads=[],activeCategory="",authMode="login",editingId=null;
+const token=()=>localStorage.getItem("elonuz_token");
+function currentUser(){try{return JSON.parse(localStorage.getItem("elonuz_user"))}catch(e){return null}}
+function headers(){return{"Content-Type":"application/json","Authorization":"Bearer "+token()}}
+function updateUserUI(){const u=currentUser();document.getElementById("guestButtons").classList.toggle("hidden",!!u);document.getElementById("userButtons").classList.toggle("hidden",!u);if(u)document.getElementById("userName").textContent="👤 "+u.name}
+async function loadAds(){try{const r=await fetch("/api/ads");ads=await r.json();document.getElementById("pageTitle").textContent="E'lonlar";renderAds()}catch(e){document.getElementById("ads").innerHTML='<div class="empty">❌ E\'lonlarni yuklashda xatolik</div>'}}
+function escapeHtml(t){const d=document.createElement("div");d.textContent=t||"";return d.innerHTML}
+function renderAds(){const s=document.getElementById("searchInput").value.toLowerCase(),r=document.getElementById("regionFilter").value,u=currentUser();const f=ads.filter(a=>((a.title||"")+" "+(a.description||"")).toLowerCase().includes(s)&&(!r||a.region===r)&&(!activeCategory||a.category===activeCategory));const c=document.getElementById("ads");if(!f.length){c.innerHTML='<div class="empty">📭 E\'lon topilmadi</div>';return}c.innerHTML=f.map(a=>`<div class="card"><div class="emoji">${escapeHtml(a.image||"📦")}</div><h3>${escapeHtml(a.title)}</h3><div class="price">${Number(a.price).toLocaleString("uz-UZ")} so'm</div><div class="muted">📂 ${escapeHtml(a.category||"Boshqa")}</div><div class="muted">📍 ${escapeHtml(a.region||"")}, ${escapeHtml(a.city||"")}</div><p>${escapeHtml(a.description||"")}</p><div class="muted">👤 ${escapeHtml(a.seller||"")}</div><div class="muted">📞 ${escapeHtml(a.phone||"")}</div><div class="actions">${u?`<button class="secondary" onclick="addFavorite(${a.id})">❤️</button>`:""}${u&&Number(a.user_id)===Number(u.id)?`<button class="secondary" onclick="editAd(${a.id})">✏️ Tahrirlash</button><button class="danger" onclick="deleteAd(${a.id})">🗑️ O'chirish</button>`:""}</div></div>`).join("")}
+document.querySelectorAll(".cat").forEach(c=>c.addEventListener("click",()=>{document.querySelectorAll(".cat").forEach(x=>x.classList.remove("active"));c.classList.add("active");activeCategory=c.dataset.category;renderAds()}));
+function openAuth(m){if(m)authMode=m;document.getElementById("authModal").style.display="block";updateAuthForm()}function closeAuth(){document.getElementById("authModal").style.display="none"}function toggleAuth(){authMode=authMode==="login"?"register":"login";updateAuthForm()}function updateAuthForm(){const r=authMode==="register";document.getElementById("authTitle").textContent=r?"Ro'yxatdan o'tish":"Kirish";document.getElementById("registerName").classList.toggle("hidden",!r);document.getElementById("authHint").textContent=r?"Yangi akkaunt yarating":"Akkauntingizga kiring"}
+async function submitAuth(){const name=document.getElementById("authName").value.trim(),phone=document.getElementById("authPhone").value.trim(),password=document.getElementById("authPassword").value;if(!phone||!password||authMode==="register"&&!name){alert("Kerakli maydonlarni to'ldiring");return}try{const r=await fetch(authMode==="register"?"/api/register":"/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(authMode==="register"?{name,phone,password}:{phone,password})});const x=await r.json();if(!r.ok)throw new Error(x.error);localStorage.setItem("elonuz_token",x.token);localStorage.setItem("elonuz_user",JSON.stringify(x.user));closeAuth();updateUserUI();renderAds();alert("🎉 Muvaffaqiyatli!") }catch(e){alert("❌ "+e.message)}}
+function logout(){localStorage.removeItem("elonuz_token");localStorage.removeItem("elonuz_user");updateUserUI();renderAds()}
+function openAdModal(){if(!token()){alert("Avval login qiling");openAuth();return}editingId=null;document.getElementById("adModalTitle").textContent="Yangi e'lon";document.getElementById("adForm").reset();document.getElementById("adModal").style.display="block"}function closeAdModal(){document.getElementById("adModal").style.display="none";editingId=null}
+document.getElementById("adForm").addEventListener("submit",async e=>{e.preventDefault();const d={title:title.value,price:price.value,category:category.value,region:region.value,city:city.value,description:description.value,image:image.value||"📦"};try{const r=await fetch(editingId?"/api/ads/"+editingId:"/api/ads",{method:editingId?"PUT":"POST",headers:headers(),body:JSON.stringify(d)}),x=await r.json();if(!r.ok)throw new Error(x.error);closeAdModal();await loadAds();alert("🎉 Saqlandi!")}catch(e){alert("❌ "+e.message)}})
+function editAd(id){const a=ads.find(x=>x.id===id);if(!a)return;editingId=id;document.getElementById("adModalTitle").textContent="E'lonni tahrirlash";title.value=a.title||"";price.value=a.price||"";category.value=a.category||"Boshqa";region.value=a.region||"";city.value=a.city||"";description.value=a.description||"";image.value=a.image||"📦";document.getElementById("adModal").style.display="block"}
+async function deleteAd(id){if(!confirm("E'lonni o'chirmoqchimisiz?"))return;try{const r=await fetch("/api/ads/"+id,{method:"DELETE",headers:headers()}),x=await r.json();if(!r.ok)throw new Error(x.error);await loadAds()}catch(e){alert("❌ "+e.message)}}
+async function addFavorite(id){try{const r=await fetch("/api/favorites/"+id,{method:"POST",headers:headers()}),x=await r.json();if(!r.ok)throw new Error(x.error);alert("❤️ Sevimlilarga qo'shildi")}catch(e){alert("❌ "+e.message)}}
+async function showMyAds(){try{const r=await fetch("/api/my-ads",{headers:headers()}),x=await r.json();if(!r.ok)throw new Error(x.error);ads=x;document.getElementById("pageTitle").textContent="📦 Mening e'lonlarim";renderAds()}catch(e){alert("❌ "+e.message)}}
+async function showFavorites(){try{const r=await fetch("/api/favorites",{headers:headers()}),x=await r.json();if(!r.ok)throw new Error(x.error);ads=x;document.getElementById("pageTitle").textContent="❤️ Sevimlilar";renderAds()}catch(e){alert("❌ "+e.message)}}
+window.addEventListener("click",e=>{if(e.target.id==="authModal")closeAuth();if(e.target.id==="adModal")closeAdModal()});updateUserUI();loadAds();
+</script></body></html>
