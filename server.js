@@ -54,6 +54,7 @@ async function initDatabase() {
     );
 
     ALTER TABLE users ADD COLUMN IF NOT EXISTS password TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT;
 
     CREATE TABLE IF NOT EXISTS ads (
       id BIGSERIAL PRIMARY KEY,
