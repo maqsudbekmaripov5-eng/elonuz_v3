@@ -37,7 +37,7 @@ body{padding-bottom:80px}
 <div class="logo">🇺🇿 E'lonUz</div>
 <div id="guestButtons"><button class="secondary" onclick="openAuth()">🔐 Kirish</button><button class="primary" onclick="openAuth('register')">Ro'yxatdan o'tish</button></div>
 <div id="userButtons" class="hidden"><span id="userName"></span><button class="secondary" onclick="showMyAds()">📦 Mening e'lonlarim</button><button class="secondary" onclick="showFavorites()">❤️ Sevimlilar</button><button class="danger" onclick="logout()">Chiqish</button></div>
-<button class="primary" onclick="openAdModal()">＋ E'lon berish</button>
+<button class="primary" onclick="openAdModal()" style="display:none">＋ E'lon berish</button>
 </div></header>
 <div class="container"><div class="hero"><h1>O'zbekistondagi e'lonlar platformasi</h1><p>E'lonlarni toping, soting va xarid qiling.</p><div class="search"><input id="searchInput" placeholder="Nima qidiryapsiz?" oninput="renderAds()"><select id="regionFilter" onchange="renderAds()"><option value="">Barcha hududlar</option><option>Toshkent</option><option>Andijon</option><option>Samarqand</option><option>Buxoro</option><option>Farg'ona</option><option>Namangan</option></select><button class="primary" onclick="renderAds()">Qidirish</button></div></div>
 <div class="categories"><button class="cat active" data-category="">Hammasi</button><button class="cat" data-category="Telefonlar">📱 Telefonlar</button><button class="cat" data-category="Avtomobillar">🚗 Avtomobillar</button><button class="cat" data-category="Texnika">🧺 Texnika</button><button class="cat" data-category="Uy-joy">🏠 Uy-joy</button><button class="cat" data-category="Ish">💼 Ish</button><button class="cat" data-category="Boshqa">📦 Boshqa</button></div>
